@@ -1,0 +1,30 @@
+import org.apache.beam.sdk.Pipeline;
+import org.apache.beam.sdk.io.TextIO;
+import org.apache.beam.sdk.transforms.MapElements;
+import org.apache.beam.sdk.schemas.Schema;
+import org.apache.beam.sdk.schemas.transforms.JsonToRow;
+import org.apache.beam.sdk.values.TypeDescriptor;
+
+public class JsonToRowExample {
+    public static void main(String[] args) {
+        Pipeline pipeline = Pipeline.create();
+
+        // Define a single schema that accommodates all possible fields
+        Schema schema = Schema.builder()
+            .addField("name", Schema.FieldType.STRING)
+            .addField("price", Schema.FieldType.DOUBLE)
+            .addField("category", Schema.FieldType.STRING)
+            .addField("id", Schema.FieldType.INT32) // Add fields from other JSON data sources
+            .addField("description", Schema.FieldType.STRING) // Add fields from other JSON data sources
+            .build();
+
+        pipeline
+            .apply("Read JSON Data", TextIO.read().from("path/to/json/data"))
+            .apply("Transform JSON to Rows", MapElements
+                .into(TypeDescriptor.of(Schema.class))
+                .via((String json) -> JsonToRow.withSchema(schema).apply(json)))
+            .apply("Process Rows", ...); // Continue with your processing logic
+
+        pipeline.run().waitUntilFinish();
+    }
+}
