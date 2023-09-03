@@ -1,0 +1,15 @@
+import com.google.cloud.pubsub.v1.Schema as GoogleSchema;
+import org.apache.beam.sdk.schemas.Schema as BeamSchema;
+import com.google.gson.Gson;
+
+// Assuming you have a Google Schema object
+GoogleSchema googleSchema = ...
+
+// Create a Gson instance
+Gson gson = new Gson();
+
+// Serialize the Google Schema to a JSON string
+String schemaJson = gson.toJson(googleSchema);
+
+// Deserialize the JSON string back to an Apache Beam Schema
+BeamSchema beamSchema = gson.fromJson(schemaJson, BeamSchema.class);
