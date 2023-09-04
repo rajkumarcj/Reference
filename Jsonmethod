@@ -1,0 +1,69 @@
+Certainly, if you're facing issues with import aliases, you can wrap the schema conversion logic in a method. Here's the updated code:
+
+```java
+import org.apache.beam.sdk.Pipeline;
+import org.apache.beam.sdk.io.TextIO;
+import org.apache.beam.sdk.transforms.MapElements;
+import org.apache.beam.sdk.schemas.Schema;
+import org.apache.beam.sdk.schemas.transforms.JsonToRow;
+import org.apache.beam.sdk.values.TypeDescriptor;
+import com.google.pubsub.v1.Schema as GoogleSchema;
+import com.google.pubsub.v1.Schema.Field as GoogleField;
+
+public class JsonToRowExample {
+    public static void main(String[] args) {
+        Pipeline pipeline = Pipeline.create();
+
+        // Fetch schema from Pub/Sub Schemas Registry
+        String schemaName = "yourSchemaName"; // Replace with your schema name
+        String projectId = "yourProjectId"; // Replace with your project ID
+        SchemaRegistry schemaRegistry = SchemaRegistry.builder()
+                .setProjectId(projectId)
+                .build();
+        GoogleSchema googleSchema = schemaRegistry.getSchema(schemaName);
+
+        // Convert the Pub/Sub schema to an Apache Beam schema
+        Schema beamSchema = convertGoogleSchemaToBeamSchema(googleSchema);
+
+        pipeline
+            .apply("Read JSON Data", TextIO.read().from("path/to/json/data"))
+            .apply("Transform JSON to Rows", MapElements
+                .into(TypeDescriptor.of(Schema.class))
+                .via((String json) -> JsonToRow.withSchema(beamSchema).apply(json)))
+            .apply("Process Rows", ...); // Continue with your processing logic
+
+        pipeline.run().waitUntilFinish();
+    }
+
+    private static Schema convertGoogleSchemaToBeamSchema(GoogleSchema googleSchema) {
+        Schema.Builder beamSchemaBuilder = Schema.builder();
+
+        for (GoogleField googleField : googleSchema.getFieldsList()) {
+            String fieldName = googleField.getName();
+            Schema.FieldType fieldType = mapFieldType(googleField.getType());
+
+            // Add the field to the Apache Beam Schema
+            beamSchemaBuilder.addField(fieldName, fieldType);
+        }
+
+        return beamSchemaBuilder.build();
+    }
+
+    private static Schema.FieldType mapFieldType(GoogleField.Type googleFieldType) {
+        // Map Google Schema field types to Apache Beam Schema field types
+        switch (googleFieldType) {
+            case STRING:
+                return Schema.FieldType.STRING;
+            case INT64:
+                return Schema.FieldType.INT64;
+            case DOUBLE:
+                return Schema.FieldType.DOUBLE;
+            // Add more mappings for other types as needed
+            default:
+                return Schema.FieldType.STRING; // Default to string
+        }
+    }
+}
+```
+
+Wrapping the schema conversion logic in the `convertGoogleSchemaToBeamSchema` method should help you avoid import alias issues and maintain a clean and organized code structure.
