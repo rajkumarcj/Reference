@@ -1,0 +1,45 @@
+If you want to pass the Google Cloud Pub/Sub Schema as a string and then convert it to an Apache Beam Schema, you can modify the code accordingly. Here's how you can do it:
+
+```java
+import org.apache.beam.sdk.Pipeline;
+import org.apache.beam.sdk.io.TextIO;
+import org.apache.beam.sdk.transforms.MapElements;
+import org.apache.beam.sdk.schemas.Schema;
+import org.apache.beam.sdk.schemas.transforms.JsonToRow;
+import org.apache.beam.sdk.values.TypeDescriptor;
+
+public class JsonToRowExample {
+    public static void main(String[] args) {
+        Pipeline pipeline = Pipeline.create();
+
+        // Fetch schema from Pub/Sub Schemas Registry and serialize it to a string
+        String schemaName = "yourSchemaName"; // Replace with your schema name
+        String projectId = "yourProjectId"; // Replace with your project ID
+        SchemaRegistry schemaRegistry = SchemaRegistry.builder()
+                .setProjectId(projectId)
+                .build();
+        String schemaAsString = schemaRegistry.getSchema(schemaName).toString(); // Serialize the schema to a string
+
+        // Convert the schema string to an Apache Beam schema
+        Schema beamSchema = Schema.builder().build();
+        beamSchema.from(schemaAsString); // Deserialize the schema from the string
+
+        pipeline
+            .apply("Read JSON Data", TextIO.read().from("path/to/json/data"))
+            .apply("Transform JSON to Rows", MapElements
+                .into(TypeDescriptor.of(Schema.class))
+                .via((String json) -> JsonToRow.withSchema(beamSchema).apply(json)))
+            .apply("Process Rows", ...); // Continue with your processing logic
+
+        pipeline.run().waitUntilFinish();
+    }
+}
+```
+
+In this code:
+
+- We fetch the Google Cloud Pub/Sub Schema, serialize it to a string using `toString()`, and store it in `schemaAsString`.
+- We create an empty Apache Beam schema (`beamSchema`).
+- We deserialize the schema from the string using `beamSchema.from(schemaAsString)`. This will populate the `beamSchema` with the schema information from the string.
+
+With this modification, you're passing the schema as a string and then converting it to an Apache Beam Schema for use with `JsonToRow`.
