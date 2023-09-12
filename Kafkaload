@@ -1,0 +1,84 @@
+To add time measurement to your Apache Beam pipeline while consuming Kafka data and stop the pipeline after processing a certain number of records or based on a condition, you can use Java's `Instant` from the `java.time` package to record timestamps at key points in your pipeline. Here's an extended example that includes time measurement and a record count condition:
+
+```java
+import org.apache.beam.sdk.Pipeline;
+import org.apache.beam.sdk.PipelineResult;
+import org.apache.beam.sdk.io.kafka.KafkaIO;
+import org.apache.beam.sdk.transforms.MapElements;
+import org.apache.beam.sdk.transforms.SimpleFunction;
+import org.apache.beam.sdk.transforms.DoFn;
+import org.apache.beam.sdk.transforms.ParDo;
+import org.apache.beam.sdk.transforms.ProcessingTime;
+import org.apache.beam.sdk.transforms.windowing.FixedWindows;
+import org.apache.beam.sdk.transforms.windowing.Window;
+import org.apache.beam.sdk.values.TypeDescriptor;
+import org.apache.kafka.common.serialization.StringDeserializer;
+import org.joda.time.Duration;
+
+import java.time.Instant;
+
+public class KafkaConsumerPipeline {
+    public static void main(String[] args) {
+        Pipeline pipeline = Pipeline.create();
+
+        Instant startTime = Instant.now(); // Record start time
+        
+        // Define Kafka consumer configuration
+        KafkaIO.Read<String, String> kafkaRead = KafkaIO.<String, String>read()
+                .withBootstrapServers("your-bootstrap-servers")
+                .withTopic("your-topic")
+                .withKeyDeserializer(StringDeserializer.class)
+                .withValueDeserializer(StringDeserializer.class)
+                .withoutMetadata(); // Exclude Kafka metadata
+
+        PCollection<String> kafkaRecords = pipeline
+            .apply(kafkaRead)
+            .apply(Window.<KafkaRecord<String, String>>into(FixedWindows.of(Duration.standardMinutes(1))))
+            .apply(ParDo.of(new YourProcessingFunction()));
+
+        // Add a ParDo to count the records
+        PCollection<Void> countRecords = kafkaRecords
+            .apply(MapElements
+                .into(TypeDescriptor.of(Void.class))
+                .via((String record) -> {
+                    // You can put your record count logic here
+                    return null;
+                }));
+
+        Instant endTime = Instant.now(); // Record end time
+        
+        // Define a condition to stop the pipeline (e.g., after processing a certain number of records)
+        int maxRecordsToProcess = 1000;
+        long elapsedMilliseconds = Duration.between(startTime, endTime).toMillis();
+        
+        if (elapsedMilliseconds > 60000 || countRecords.apply(Count.globally()).isGreaterThanOrEqualTo(maxRecordsToProcess)) {
+            // Stop the pipeline if it has run for more than 60 seconds or processed the desired number of records
+            pipeline.cancel();
+        }
+
+        PipelineResult result = pipeline.run();
+
+        if (result.waitUntilFinish(Duration.standardMinutes(5))) {
+            // Pipeline completed successfully or was canceled
+            System.out.println("Pipeline completed successfully or was canceled.");
+        } else {
+            // Pipeline execution failed
+            System.out.println("Pipeline execution failed.");
+        }
+    }
+}
+```
+
+In this extended example:
+
+1. We record the start time using `Instant.now()` just before defining the Kafka consumer.
+
+2. After the Kafka records are processed, we record the end time again using `Instant.now()`.
+
+3. We calculate the elapsed time by subtracting the start time from the end time to measure how long the pipeline ran.
+
+4. We also introduce a record counting step (the `countRecords` PCollection) to track the number of records processed.
+
+5. We check two conditions for stopping the pipeline: either the elapsed time exceeds 60 seconds or the number of records processed reaches the desired maximum (`maxRecordsToProcess`). If either condition is met, we cancel the pipeline explicitly.
+
+This extended code provides time measurement and a condition for stopping the pipeline based on elapsed time or the number of processed records. Adjust the `YourProcessingFunction` and the record count logic according to your specific use case.
