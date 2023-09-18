@@ -1,69 +1,47 @@
-To get the schema from Google Cloud Pub/Sub and pass it to a Google Cloud Dataflow (Apache Beam) pipeline using Java, you can follow these general steps:
+static Row stringToRow(String rowString) {
+    // Remove "Row:[" and "]" from the string
+    rowString = rowString.substring(5, rowString.length() - 1);
+    
+    // Split the string into fields
+    String[] fieldStrings = rowString.split(", ");
 
-1. Set up your development environment:
-   - Ensure you have Java and Maven installed.
-   - Set up the Google Cloud SDK and authenticate with your GCP account.
+    // Create an array of objects for the Row
+    Object[] fields = new Object[fieldStrings.length];
+    for (int i = 0; i < fieldStrings.length; i++) {
+        String field = fieldStrings[i].trim();
+        if (field.equals("Row")) {
+            // If the field is "Row", it indicates a nested Row
+            fields[i] = parseNestedRow(fieldStrings, i);
+        } else {
+            fields[i] = field;
+        }
+    }
 
-2. Create a Pub/Sub subscription:
-   - Use the Google Cloud Console or the `gcloud` command-line tool to create a subscription to the Pub/Sub topic from which you want to consume messages.
+    // Create and return the Row
+    return new Row(fields);
+}
 
-3. Write a Java program to fetch the schema and process Pub/Sub messages:
+// Parse a nested Row
+static Row parseNestedRow(String[] fieldStrings, int startIndex) {
+    int endIndex = startIndex + 1;
+    int openBracketCount = 1;
+    while (endIndex < fieldStrings.length) {
+        String field = fieldStrings[endIndex].trim();
+        if (field.equals("Row")) {
+            openBracketCount++;
+        } else if (field.equals("]")) {
+            openBracketCount--;
+            if (openBracketCount == 0) {
+                break;
+            }
+        }
+        endIndex++;
+    }
 
-   ```java
-   import com.google.api.services.pubsub.Pubsub;
-   import com.google.api.services.pubsub.model.GetSubscriptionRequest;
-   import com.google.api.services.pubsub.model.Subscription;
-   import org.apache.beam.sdk.Pipeline;
-   import org.apache.beam.sdk.io.gcp.pubsub.PubsubIO;
-   import org.apache.beam.sdk.transforms.*;
-   import org.apache.beam.sdk.values.PCollection;
-   import org.apache.beam.sdk.values.TypeDescriptor;
-   import org.apache.beam.sdk.values.TypeDescriptorCollection;
+    // Extract the substring containing the nested Row
+    String[] nestedRowStrings = Arrays.copyOfRange(fieldStrings, startIndex, endIndex + 1);
+    String nestedRowString = String.join(", ", nestedRowStrings);
 
-   public class PubsubToBeamWithSchema {
-       public static void main(String[] args) {
-           String projectId = "your-project-id";
-           String subscriptionId = "your-subscription-id";
-           String topicId = "your-topic-id";
-
-           Pubsub pubsub = PubsubFactory.getPubsub(projectId);
-
-           // Fetch the subscription to get the schema
-           Subscription subscription = pubsub.projects().subscriptions()
-                   .get("projects/" + projectId + "/subscriptions/" + subscriptionId)
-                   .execute();
-
-           String schema = subscription.getSchema();
-
-           Pipeline pipeline = Pipeline.create();
-
-           PCollection<String> messages = pipeline.apply("Read from Pub/Sub",
-                   PubsubIO.readStrings().fromSubscription("projects/" + projectId + "/subscriptions/" + subscriptionId)
-                           .withTimestampAttribute("your-timestamp-attribute"));
-
-           // Use the schema and process the messages as needed
-           messages.apply("Process Messages", ParDo.of(new DoFn<String, Void>() {
-               @ProcessElement
-               public void processElement(ProcessContext c) {
-                   String message = c.element();
-                   // Process the message using the schema
-                   // You can use the schema to deserialize the message into a specific object
-               }
-           }));
-
-           pipeline.run();
-       }
-   }
-   ```
-
-4. Replace the placeholders like `your-project-id`, `your-subscription-id`, `your-topic-id`, and `your-timestamp-attribute` with your actual project and subscription details.
-
-5. Use the `schema` variable to deserialize the Pub/Sub messages within the `processElement` method of the `DoFn`. You might need to use a library like Apache Avro or Protocol Buffers to work with the schema and deserialize the messages accordingly.
-
-6. Compile and execute your Beam pipeline:
-
-   ```bash
-   mvn compile exec:java -Dexec.mainClass=your.package.name.PubsubToBeamWithSchema
-   ```
-
-This code provides a basic framework for reading messages from Pub/Sub, fetching the schema, and processing the messages within a Beam pipeline. You will need to adapt it to your specific use case and schema format.
+    // Recursively parse the nested Row
+    return new Row(stringToRow(nestedRowString));
+}
