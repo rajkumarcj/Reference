@@ -42,14 +42,16 @@ public class JsonCreationBeam {
 
     // Function to convert a Row to JSON
     public static String convertRowToJson(Row row, Schema schema) {
-        Map<String, Object> jsonMap = new HashMap<>();
-        for (Schema.Field field : schema.getFields()) {
-            String fieldName = field.getName();
-            if (row.hasField(fieldName)) {
-                Object value = row.getValue(fieldName);
-                jsonMap.put(fieldName, value);
-            }
+    Gson gson = new Gson();
+    JsonObject jsonObject = new JsonObject();
+    for (Schema.Field field : schema.getFields()) {
+        String fieldName = field.getName();
+        int fieldIndex = schema.getFieldIndex(fieldName); // Get the field index by name
+
+        if (fieldIndex >= 0 && fieldIndex < row.getFieldCount()) {
+            Object value = row.getValue(fieldIndex);
+            jsonObject.add(fieldName, gson.toJsonTree(value));
         }
-        return new Gson().toJson(jsonMap);
     }
+    return gson.toJson(jsonObject);
 }
