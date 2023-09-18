@@ -1,0 +1,55 @@
+import org.apache.beam.sdk.Pipeline;
+import org.apache.beam.sdk.io.TextIO;
+import org.apache.beam.sdk.io.gcp.bigquery.TableRowJsonCoder;
+import org.apache.beam.sdk.schemas.Schema;
+import org.apache.beam.sdk.transforms.MapElements;
+import org.apache.beam.sdk.transforms.SimpleFunction;
+import org.apache.beam.sdk.values.TypeDescriptor;
+
+public class JsonCreationBeam {
+    public static void main(String[] args) {
+        Pipeline pipeline = Pipeline.create();
+
+        // Define your schema
+        Schema schema = Schema.builder()
+                .addStringField("name")
+                .addStringField("type")
+                .addRowField("details", Schema.builder()
+                        .addInt32Field("id")
+                        .addStringField("description")
+                        .build())
+                .addStringField("position")
+                .addArrayField("attributes", Schema.FieldType.STRING)
+                .build();
+
+        // Create a PCollection of rows
+        PCollection<Row> rows = ...
+
+        // Convert rows to JSON
+        PCollection<String> jsonObjects = rows.apply("Convert to JSON",
+                MapElements
+                        .into(TypeDescriptor.of(String.class))
+                        .via((Row row) -> {
+                            // Create a JSON string from the row
+                            return convertRowToJson(row, schema);
+                        }));
+
+        // Write the JSON objects to a file
+        jsonObjects.apply("Write to JSON File", TextIO.write().to("output.json").withoutSharding());
+
+        pipeline.run();
+    }
+
+    // Function to convert a Row to JSON
+    public static String convertRowToJson(Row row, Schema schema) {
+        Map<String, Object> jsonMap = new HashMap<>();
+        for (Schema.Field field : schema.getFields()) {
+            String fieldName = field.getName();
+            if (row.hasField(fieldName)) {
+                Object value = row.getValue(fieldName);
+                jsonMap.put(fieldName, value);
+            }
+        }
+        return new Gson().toJson(jsonMap);
+    }
+}
