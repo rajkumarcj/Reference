@@ -1,7 +1,7 @@
 String inputString = "apple,banana,cherry, [1, 2, 3, 4, 5]";
 
 // Split the string using regular expression to match commas not within square brackets
-String[] parts = inputString.split(",(?=(?:[^\\\"]*\\\"[^\\\"]*\\\")*[^\\\"]*$)");
+String[] parts = inputString.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
 
 // Now 'parts' contains the split elements
 for (String part : parts) {
