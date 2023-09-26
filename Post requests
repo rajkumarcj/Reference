@@ -1,0 +1,51 @@
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.net.HttpURLConnection;
+import java.net.URL;
+
+public class LongPostRequest {
+    public static void main(String[] args) {
+        try {
+            // Define the URL to which you want to send the POST request
+            URL url = new URL("https://example.com/api/endpoint");
+
+            // Open a connection to the URL
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+
+            // Set the request method to POST
+            connection.setRequestMethod("POST");
+
+            // Enable input/output streams
+            connection.setDoOutput(true);
+
+            // Set the content type of the request (e.g., application/json)
+            connection.setRequestProperty("Content-Type", "application/json");
+
+            // Create a long JSON body as a string
+            String requestBody = "Your long JSON body here...";
+
+            // Get the output stream of the connection
+            OutputStream outputStream = connection.getOutputStream();
+
+            // Write the request body to the output stream
+            OutputStreamWriter writer = new OutputStreamWriter(outputStream);
+            writer.write(requestBody);
+            writer.flush();
+
+            // Close the writer and the output stream
+            writer.close();
+            outputStream.close();
+
+            // Get the HTTP response code
+            int responseCode = connection.getResponseCode();
+            System.out.println("Response Code: " + responseCode);
+
+            // Handle the response here if needed
+
+            // Close the connection
+            connection.disconnect();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
