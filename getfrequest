@@ -1,0 +1,38 @@
+import java.util.List;
+
+public class MyClass {
+    public static String getfrequest(List<String> listdetails, int counter) {
+        String tempstr = "#";
+
+        for (int i = 0; i < counter - 1; i++) {
+            String currentElement = listdetails.get(counter - i - 1);
+
+            if (!currentElement.equals("#") &&
+                !currentElement.equals(tempstr) &&
+                !currentElement.equals("[]")) {
+
+                int localValue = 1;
+
+                for (int j = 0; j < counter - i - 1; j++) {
+                    if (listdetails.get(j).equals(currentElement)) {
+                        localValue++;
+                    }
+                }
+
+                if (localValue > 1) {
+                    tempstr = currentElement;
+                }
+            }
+        }
+
+        return tempstr;
+    }
+
+    public static void main(String[] args) {
+        // Example usage:
+        // List<String> listdetails = Arrays.asList("A", "B", "C");
+        // int counter = 3;
+        // String result = getfrequest(listdetails, counter);
+        // System.out.println(result);
+    }
+}
