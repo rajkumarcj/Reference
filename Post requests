@@ -3,11 +3,11 @@ import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-public class LongPostRequest {
-    public static void main(String[] args) {
+public class JsonRequestSender {
+    public static void sendPostRequest(String urlStr, String jsonBody) {
         try {
             // Define the URL to which you want to send the POST request
-            URL url = new URL("https://example.com/api/endpoint");
+            URL url = new URL(urlStr);
 
             // Open a connection to the URL
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -21,15 +21,12 @@ public class LongPostRequest {
             // Set the content type of the request (e.g., application/json)
             connection.setRequestProperty("Content-Type", "application/json");
 
-            // Create a long JSON body as a string
-            String requestBody = "Your long JSON body here...";
-
-            // Get the output stream of the connection
+            // Create an output stream to write the request body
             OutputStream outputStream = connection.getOutputStream();
 
-            // Write the request body to the output stream
+            // Write the JSON body to the output stream
             OutputStreamWriter writer = new OutputStreamWriter(outputStream);
-            writer.write(requestBody);
+            writer.write(jsonBody);
             writer.flush();
 
             // Close the writer and the output stream
@@ -47,5 +44,12 @@ public class LongPostRequest {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public static void main(String[] args) {
+        // Example usage of the sendPostRequest function
+        String url = "https://example.com/api/endpoint";
+        String jsonBody = "{\"key\": \"value\"}"; // Replace with your JSON data
+        sendPostRequest(url, jsonBody);
     }
 }
