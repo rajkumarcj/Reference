@@ -1,0 +1,74 @@
+public class EPPstreamToCalIModelType {
+    private String engagement_id;
+    private String sourceTimestamp;
+    private String mn;
+    private String accountNo;
+    private String customerId;
+    private String web_rt_webpage_uri;
+    private String web_rt_webref_url;
+    private String web_rt_webinteraction_url;
+    private String web_rt_dev_screenwidth;
+    private String web_rt_browser_width;
+    private String web_rt_browser_useragent;
+    private String web_rt_txn_productowns;
+    private String web_rt_txn_productcurrent;
+    private String web_rt_txn_cartid;
+    private String web_rt_page_link;
+    private String web_rt_page_flow;
+    private String web_rt_page_name;
+    private String web_rt_page_channel;
+    private String web_rt_page_detail;
+    private String web_rt_page_contentfragments;
+    private String web_rt_user_zip;
+    private String web_rt_user_customerrole;
+    private String web_rt_user_customertype;
+    private String web_rt_error_code;
+    private String web_rt_event_value;
+    private String web_rt_target_offer;
+    private String web_rt_target_message;
+    private String web_rt_env_useragent;
+    private String web_rt_page_url_espanol_ind;
+    private String web_rt_page_url_new_line_ind;
+    private String web_rt_page_ur1_checkout_ind;
+    private String web_rt_weekday;
+    private String web_rt_hour_of_day;
+
+    // Constructors, getters, and setters for each field
+}
+
+
+import java.util.List;
+
+public class EPPEicdMapType {
+    private int sessioncount;
+    private List<String> web_rt_webpage_url;
+    private List<String> web_rt_webref_url;
+    private List<String> web_rt_webinteraction_url;
+    private List<String> web_rt_dev_screenwidth;
+    private List<String> web_rt_browser_width;
+    private List<String> web_rt_browser_useragent;
+    private List<String> web_rt_tn_productowns;
+    private List<String> web_rt_tn_productcurrent;
+    private List<String> web_rt_ton_cartid;
+    private List<String> web_rt_page_link;
+    private List<String> web_rt_page_flow;
+    private List<String> web_rt_page_name;
+    private List<String> web_rt_page_channel;
+    private List<String> web_rt_page_detail;
+    private List<String> web_rt_page_contentfragments;
+    private List<String> web_rt_user_zip;
+    private List<String> web_rt_user_customerrole;
+    private List<String> web_rt_user_customertype;
+    private List<String> web_rt_error_code;
+    private List<String> web_rt_event_value;
+    private List<String> web_rt_target_offer;
+    private List<String> web_rt_target_message;
+    private List<String> web_rt_env_useragent;
+    private List<String> web_rt_page_url_espanol_ind;
+    private List<String> web_rt_page_url_new_line_ind;
+    private List<String> web_rt_page_ur1_checkout_ind;
+    private List<String> web_rt_weekday;
+    private List<String> web_rt_hour_of_day;
+
+    // Getters and setters for each field
+}
