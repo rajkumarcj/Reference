@@ -1,0 +1,30 @@
+To convert a date and time from "EST5EDT" (Eastern Standard Time with Daylight Saving Time) to GMT (Greenwich Mean Time) in Java, you can use the `SimpleDateFormat` class to handle the conversion. Here's an example of how you can do this:
+
+```java
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.TimeZone;
+
+public class EST5EDTToGMTConversion {
+    public static void main(String[] args) {
+        String est5edtDateString = "2023-11-06 14:30:00"; // Replace with your input EST5EDT date string
+
+        SimpleDateFormat est5edtSdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        est5edtSdf.setTimeZone(TimeZone.getTimeZone("EST5EDT"));
+
+        try {
+            Date est5edtDate = est5edtSdf.parse(est5edtDateString);
+
+            SimpleDateFormat gmtSdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            gmtSdf.setTimeZone(TimeZone.getTimeZone("GMT"));
+
+            String gmtDateString = gmtSdf.format(est5edtDate);
+            System.out.println("Date in GMT format: " + gmtDateString);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+In this example, we first parse the input string with the "EST5EDT" time zone. Then, we create another `SimpleDateFormat` with the "GMT" time zone and format the date back into a string in GMT time. The resulting string will be in GMT format.
