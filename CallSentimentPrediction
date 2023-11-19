@@ -1,0 +1,55 @@
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.ml.classification.NaiveBayesModel;
+import org.apache.spark.ml.feature.HashingTF;
+import org.apache.spark.ml.feature.IDF;
+import org.apache.spark.ml.feature.Tokenizer;
+import org.apache.spark.ml.feature.VectorAssembler;
+import org.apache.spark.ml.linalg.Vector;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SparkSession;
+
+public class CallSentimentPrediction {
+
+    public static void main(String[] args) {
+        // Create a Spark session
+        SparkSession spark = SparkSession.builder()
+                .appName("CallSentimentPrediction")
+                .config("spark.master", "local")
+                .getOrCreate();
+
+        // Load the pre-trained sentiment analysis model
+        NaiveBayesModel model = NaiveBayesModel.load("path/to/your/model");
+
+        // Input text for prediction
+        String inputText = "callerid, I like this scheme.";
+
+        // Tokenize and featurize the input text
+        Tokenizer tokenizer = new Tokenizer()
+                .setInputCol("text")
+                .setOutputCol("words");
+        Row inputData = RowFactory.create(inputText);
+        StructType schema = new StructType().add("text", DataTypes.StringType, false);
+        Dataset<Row> inputDF = spark.createDataFrame(Collections.singletonList(inputData), schema);
+        Dataset<Row> wordsData = tokenizer.transform(inputDF);
+
+        HashingTF hashingTF = new HashingTF()
+                .setInputCol("words")
+                .setOutputCol("rawFeatures")
+                .setNumFeatures(10000);
+        Dataset<Row> featurizedData = hashingTF.transform(wordsData);
+
+        IDF idf = new IDF()
+                .setInputCol("rawFeatures")
+                .setOutputCol("features");
+        idf.fit(featurizedData);
+
+        // Make a prediction
+        Dataset<Row> predictions = model.transform(featurizedData);
+
+        // Display the results
+        predictions.select("text", "prediction").show();
+
+        // Stop the Spark session
+        spark.stop();
+    }
+}
