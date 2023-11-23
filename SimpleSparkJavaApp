@@ -1,0 +1,22 @@
+import org.apache.spark.SparkConf;
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.JavaSparkContext;
+
+public class SimpleSparkJavaApp {
+    public static void main(String[] args) {
+        // Spark Configuration
+        SparkConf conf = new SparkConf().setAppName("SimpleSparkJavaApp").setMaster("local");
+        
+        // Spark Context
+        JavaSparkContext sc = new JavaSparkContext(conf);
+
+        // Your Spark code here
+        String inputFile = "path/to/your/inputfile.txt";
+        JavaRDD<String> lines = sc.textFile(inputFile);
+        long count = lines.count();
+        System.out.println("Number of lines in the file: " + count);
+
+        // Stop Spark Context
+        sc.stop();
+    }
+}
