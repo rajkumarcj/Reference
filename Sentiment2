@@ -1,0 +1,40 @@
+import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.mllib.classification.NaiveBayes
+import org.apache.spark.mllib.feature.HashingTF
+import org.apache.spark.mllib.feature.IDF
+import org.apache.spark.mllib.linalg.Vector
+import org.apache.spark.rdd.RDD
+
+object CallSentimentPrediction {
+
+  def main(args: Array[String]): Unit = {
+    // Set up Spark configuration and context
+    val conf = new SparkConf().setAppName("CallSentimentPrediction").setMaster("local")
+    val sc = new SparkContext(conf)
+
+    // Load the pre-trained sentiment analysis model
+    val model = NaiveBayesModel.load(sc, "path/to/your/model")
+
+    // Input text for prediction
+    val inputText = "callerid, I like this scheme."
+
+    // Tokenize and featurize the input text
+    val words = inputText.split(" ")
+    val hashingTF = new HashingTF()
+    val featurizedData: RDD[Vector] = hashingTF.transform(words)
+
+    // Use IDF to scale features
+    val idf = new IDF()
+    val idfModel = idf.fit(featurizedData)
+    val finalData = idfModel.transform(featurizedData)
+
+    // Make a prediction
+    val prediction = model.predict(finalData)
+
+    // Display the result
+    println(s"Input text: $inputText, Prediction: $prediction")
+
+    // Stop the Spark context
+    sc.stop()
+  }
+}
