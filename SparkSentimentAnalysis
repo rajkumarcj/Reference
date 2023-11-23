@@ -1,0 +1,40 @@
+import org.apache.spark.SparkConf;
+import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.ml.PipelineModel;
+import org.apache.spark.ml.classification.NaiveBayesModel;
+import org.apache.spark.ml.feature.HashingTF;
+import org.apache.spark.ml.feature.IDF;
+import org.apache.spark.ml.feature.Tokenizer;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SparkSession;
+
+public class SparkSentimentAnalysis {
+
+    public static void main(String[] args) {
+        // Create a Spark Session
+        SparkSession spark = SparkSession.builder().appName("SentimentAnalysis").master("local").getOrCreate();
+
+        // Load the pre-trained Naive Bayes model
+        NaiveBayesModel loadedModel = NaiveBayesModel.load("path/to/your/sentiment_model");
+
+        // Example text for sentiment prediction
+        String text = "I love this product! It's amazing.";
+
+        // Tokenize and featurize the input text
+        Tokenizer tokenizer = new Tokenizer().setInputCol("text").setOutputCol("words");
+        HashingTF hashingTF = new HashingTF().setInputCol("words").setOutputCol("rawFeatures");
+        IDF idf = new IDF().setInputCol("rawFeatures").setOutputCol("features").setMinDocFreq(3);
+
+        Dataset<Row> testData = spark.createDataFrame(SampleData.getTestData(text), SampleData.getSchema());
+        Dataset<Row> wordsTestData = tokenizer.transform(testData);
+        Dataset<Row> featurizedTestData = hashingTF.transform(wordsTestData);
+        Dataset<Row> tfidfTestData = idf.fit(featurizedTestData).transform(featurizedTestData);
+
+        // Predict sentiment
+        Dataset<Row> predictions = loadedModel.transform(tfidfTestData);
+
+        // Show the result
+        predictions.select("text", "prediction").show();
+    }
+}
