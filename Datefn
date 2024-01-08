@@ -1,0 +1,34 @@
+import org.apache.beam.sdk.Pipeline;
+import org.apache.beam.sdk.io.GenerateSequence;
+import org.apache.beam.sdk.io.TextIO;
+import org.apache.beam.sdk.transforms.MapElements;
+import org.apache.beam.sdk.transforms.SimpleFunction;
+import org.apache.beam.sdk.values.TypeDescriptor;
+import org.apache.beam.sdk.transforms.Print;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+public class CurrentTimePipeline {
+
+    public static void main(String[] args) {
+        Pipeline pipeline = Pipeline.create();
+
+        long currentTimestamp = System.currentTimeMillis();
+        long durationMinutes = 60; // Adjust as needed
+
+        pipeline
+            .apply(GenerateSequence.from(0).to(durationMinutes))
+            .apply(MapElements
+                .into(TypeDescriptor.of(String.class))
+                .via((SimpleFunction<Long, String>) input -> {
+                    long timestamp = currentTimestamp + input * 60 * 1000; // Convert minutes to milliseconds
+                    Date date = new Date(timestamp);
+                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                    return sdf.format(date);
+                }))
+            .apply(Print.<String>elements());
+
+        pipeline.run().waitUntilFinish();
+    }
+}
