@@ -12,14 +12,12 @@ public class PostRequestExample {
     public static void main(String[] args) throws Exception {
         int maxRetries = 3; // Maximum number of retries
         int retryDelayMillis = 1000; // Delay between retries in milliseconds
+        HttpClient httpClient = HttpClient.newBuilder()
+                .followRedirects(HttpClient.Redirect.ALWAYS)
+                .build();
 
         for (int retry = 0; retry < maxRetries; retry++) {
             try {
-                // Create HttpClient with redirect handling
-                HttpClient httpClient = HttpClient.newBuilder()
-                        .followRedirects(HttpClient.Redirect.ALWAYS)
-                        .build();
-
                 // Define the POST request body
                 String requestBody = "{\"key\":\"value\"}";
 
@@ -50,5 +48,8 @@ public class PostRequestExample {
                 Thread.sleep(retryDelayMillis); // Wait before retrying
             }
         }
+
+        // Close the HttpClient after using it
+        httpClient.close();
     }
 }
