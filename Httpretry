@@ -1,0 +1,54 @@
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.net.http.HttpHeaders;
+import java.net.http.HttpRequest.BodyPublishers;
+import java.net.http.HttpResponse.BodyHandlers;
+import java.time.Duration;
+
+public class PostRequestExample {
+
+    public static void main(String[] args) throws Exception {
+        int maxRetries = 3; // Maximum number of retries
+        int retryDelayMillis = 1000; // Delay between retries in milliseconds
+
+        for (int retry = 0; retry < maxRetries; retry++) {
+            try {
+                // Create HttpClient with redirect handling
+                HttpClient httpClient = HttpClient.newBuilder()
+                        .followRedirects(HttpClient.Redirect.ALWAYS)
+                        .build();
+
+                // Define the POST request body
+                String requestBody = "{\"key\":\"value\"}";
+
+                // Build the request
+                HttpRequest request = HttpRequest.newBuilder()
+                        .uri(new URI("http://example.com/api/endpoint"))
+                        .header("Content-Type", "application/json")
+                        .POST(BodyPublishers.ofString(requestBody))
+                        .build();
+
+                // Send the request and handle the response
+                HttpResponse<String> response = httpClient.send(request, BodyHandlers.ofString());
+
+                // Check if response is successful
+                if (response.statusCode() >= 200 && response.statusCode() < 300) {
+                    // Print the response status code and body
+                    System.out.println("Response code: " + response.statusCode());
+                    System.out.println("Response body: " + response.body());
+                    break; // Break out of retry loop if successful
+                } else {
+                    // Log error and retry
+                    System.err.println("Request failed with status code: " + response.statusCode());
+                    Thread.sleep(retryDelayMillis); // Wait before retrying
+                }
+            } catch (Exception e) {
+                // Log exception and retry
+                System.err.println("Request failed with exception: " + e.getMessage());
+                Thread.sleep(retryDelayMillis); // Wait before retrying
+            }
+        }
+    }
+}
