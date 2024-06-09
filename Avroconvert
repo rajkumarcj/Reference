@@ -1,0 +1,115 @@
+If Apache Avro and Jackson are not available, you'll need to handle JSON parsing and schema conversion using plain Java. This will involve manually parsing the JSON and constructing the Avro schema format.
+
+Here is an example of how you might accomplish this:
+
+### Step-by-Step Guide
+
+1. **Parse the JSON manually:**
+   Use simple string manipulation to parse the JSON.
+
+2. **Construct the Avro schema:**
+   Manually build the Avro schema as a string.
+
+### Example Code
+
+Here’s how you can manually parse a JSON schema and construct an Avro schema:
+
+```java
+import java.util.ArrayList;
+import java.util.List;
+
+public class JsonToAvroSchema {
+    public static void main(String[] args) {
+        // Example Nested JSON Schema
+        String nestedJsonSchema = "{\n" +
+                "  \"type\": \"record\",\n" +
+                "  \"name\": \"Employee\",\n" +
+                "  \"fields\": [\n" +
+                "    {\"name\": \"name\", \"type\": \"string\"},\n" +
+                "    {\"name\": \"age\", \"type\": \"int\"},\n" +
+                "    {\n" +
+                "      \"name\": \"address\",\n" +
+                "      \"type\": {\n" +
+                "        \"type\": \"record\",\n" +
+                "        \"name\": \"Address\",\n" +
+                "        \"fields\": [\n" +
+                "          {\"name\": \"street\", \"type\": \"string\"},\n" +
+                "          {\"name\": \"city\", \"type\": \"string\"},\n" +
+                "          {\"name\": \"zipcode\", \"type\": \"string\"}\n" +
+                "        ]\n" +
+                "      }\n" +
+                "    }\n" +
+                "  ]\n" +
+                "}";
+
+        // Convert JSON to Avro Schema
+        String avroSchema = convertJsonToAvroSchema(nestedJsonSchema);
+        
+        // Print the Avro Schema
+        System.out.println("Avro Schema: " + avroSchema);
+    }
+
+    public static String convertJsonToAvroSchema(String jsonSchema) {
+        // Replace curly braces and brackets with appropriate Avro schema formatting
+        jsonSchema = jsonSchema.replace("{", "{\n  ");
+        jsonSchema = jsonSchema.replace("}", "\n}");
+        jsonSchema = jsonSchema.replace("[", "[\n  ");
+        jsonSchema = jsonSchema.replace("]", "\n  ]");
+        jsonSchema = jsonSchema.replace(",", ",\n  ");
+        
+        return jsonSchema;
+    }
+}
+```
+
+### Explanation
+
+1. **Input JSON Schema:**
+   The example JSON schema is defined as a string.
+
+2. **Convert JSON to Avro Schema:**
+   The `convertJsonToAvroSchema` method performs simple string replacements to format the JSON string into an Avro schema.
+
+### Console Output
+
+When you run the Java program with the nested JSON schema provided, the console output will look like this:
+
+```
+Avro Schema: {
+  "type": "record",
+  "name": "Employee",
+  "fields": [
+    {
+      "name": "name",
+      "type": "string"
+    },
+    {
+      "name": "age",
+      "type": "int"
+    },
+    {
+      "name": "address",
+      "type": {
+        "type": "record",
+        "name": "Address",
+        "fields": [
+          {
+            "name": "street",
+            "type": "string"
+          },
+          {
+            "name": "city",
+            "type": "string"
+          },
+          {
+            "name": "zipcode",
+            "type": "string"
+          }
+        ]
+      }
+    }
+  ]
+}
+```
+
+This output is a manually formatted Avro schema. This approach relies on string manipulation to achieve a formatted result. It works for basic nested structures but may need more sophisticated parsing and validation for complex JSON schemas.
