@@ -1,0 +1,5 @@
+fetch dataflow_job
+| filter resource.type == "dataflow_job"
+| filter metric.type == "dataflow.googleapis.com/job/current_vcpu_count"
+| group_by [resource.job_id, resource.region, resource.project_id], [sum(value.vcpu_count)]
+| every 1m
