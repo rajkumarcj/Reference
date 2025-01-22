@@ -1,0 +1,56 @@
+#!/bin/bash
+
+# Variables
+KAFKA_BINARY_PATH="/path/to/kafka-consumer-groups.sh" # Path to your Kafka binary
+BOOTSTRAP_SERVER="localhost:9092"                     # Kafka broker
+GROUP="my-first-application"                          # Consumer group name
+BQ_DATASET="your_dataset_id"                          # BigQuery dataset
+BQ_TABLE="your_table_id"                              # BigQuery table
+TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")            # Current UTC timestamp
+
+# Run Kafka Consumer Group Describe Command
+OUTPUT=$($KAFKA_BINARY_PATH --bootstrap-server $BOOTSTRAP_SERVER --group $GROUP --describe)
+
+# Check if the command succeeded
+if [ $? -ne 0 ]; then
+  echo "Error describing the consumer group."
+  exit 1
+fi
+
+# Remove the header line and empty lines, then format each line as JSON
+JSON_DATA=$(echo "$OUTPUT" | tail -n +2 | awk -v timestamp="$TIMESTAMP" '
+  NF > 0 {
+    printf "{\"GROUP\":\"%s\", \"TOPIC\":\"%s\", \"PARTITION\":%d, \"CURRENT_OFFSET\":%d, \"LOG_END_OFFSET\":%d, \"LAG\":%d, \"CONSUMER_ID\":\"%s\", \"HOST\":\"%s\", \"CLIENT_ID\":\"%s\", \"TIMESTAMP\":\"%s\"}\n",
+      $1, $2, $3, $4, $5, $6, $7, $8, $9, timestamp
+  }
+')
+
+# Debug: Show the formatted JSON data
+echo "Formatted JSON Data:"
+echo "$JSON_DATA"
+
+# Validate JSON: Write JSON data to a temporary file and check for errors
+TEMP_FILE=$(mktemp)
+echo "$JSON_DATA" > "$TEMP_FILE"
+
+if ! jq empty "$TEMP_FILE" >/dev/null 2>&1; then
+  echo "Error: Invalid JSON detected."
+  cat "$TEMP_FILE"
+  rm "$TEMP_FILE"
+  exit 1
+fi
+
+# Load the data into BigQuery
+bq load --source_format=NEWLINE_DELIMITED_JSON $BQ_DATASET.$BQ_TABLE "$TEMP_FILE"
+
+# Check if the insertion succeeded
+if [ $? -eq 0 ]; then
+  echo "Data successfully inserted into BigQuery."
+else
+  echo "Error inserting data into BigQuery. See logs for details."
+  rm "$TEMP_FILE"
+  exit 1
+fi
+
+# Remove the temporary file
+rm "$TEMP_FILE"
